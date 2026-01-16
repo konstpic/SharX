@@ -62,9 +62,104 @@ Welcome to the next generation of 3x-ui! This version brings significant improve
 ## Installation
 
 ### Prerequisites
-- Docker and Docker Compose installed on your system
-- Basic knowledge of Docker commands
-- Ports available: 2053 (Web UI), 2096 (Subscriptions), 5432 (PostgreSQL - optional)
+- Linux server (Ubuntu, Debian, CentOS, Fedora, Arch, Alpine, openSUSE)
+- Root access
+- Ports available: 2053 (Web UI), 2096 (Subscriptions), 80 (for SSL certificate)
+
+---
+
+## Option 1: Automatic Installation (Recommended)
+
+### One-Line Install
+
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/konstpic/3x-ui-new/main/install.sh)
+```
+
+Or clone and run:
+
+```bash
+git clone https://github.com/konstpic/3x-ui-new.git
+cd 3x-ui-new
+sudo bash install.sh
+```
+
+### What the Script Does
+
+The install script automatically:
+- Detects your Linux distribution
+- Installs Docker and Docker Compose
+- Configures network mode (host or bridge with port mapping)
+- Sets up SSL certificates via Let's Encrypt (acme.sh)
+  - For domains: 90-day certificates with auto-renewal
+  - For IP addresses: 6-day certificates with auto-renewal
+- Generates secure database password
+- Creates and starts all services
+
+### Supported Systems
+
+| Distribution | Package Manager |
+|--------------|-----------------|
+| Ubuntu/Debian | apt |
+| Fedora | dnf |
+| CentOS/RHEL | yum |
+| Arch Linux | pacman |
+| Alpine | apk |
+| openSUSE | zypper |
+
+### Panel Installation via Script
+
+```bash
+sudo bash install.sh
+```
+
+Select **1) Install Panel** and follow the prompts:
+1. Choose network mode (host/bridge)
+2. Set ports for panel and subscriptions
+3. Generate or enter database password
+4. Choose SSL certificate type (domain/IP/skip)
+
+### Node Installation via Script
+
+```bash
+sudo bash install.sh
+```
+
+Select **2) Install Node** and follow the prompts:
+1. Choose network mode (host/bridge)
+2. Set API port
+3. Choose SSL certificate type
+
+### Management Menu
+
+After installation, run the script again to access the management menu:
+
+```bash
+sudo bash install.sh
+```
+
+**Available options:**
+- **Panel**: Install, Update, Start, Stop, Restart, Status, Logs
+- **Panel Settings**: Change ports, Change DB password, Renew/Setup certificates
+- **Node**: Install, Update, Start, Stop, Restart, Status, Logs, Renew certificates
+- **Uninstall**
+
+### Update Panel/Node
+
+```bash
+sudo bash install.sh
+# Select: 2) Update Panel or 21) Update Node
+```
+
+The update process:
+1. Pulls new Docker image (while service is running)
+2. Stops and removes old container
+3. Starts new container with updated image
+4. Database is NOT restarted (no data loss)
+
+---
+
+## Option 2: Manual Installation
 
 ### Panel Installation
 

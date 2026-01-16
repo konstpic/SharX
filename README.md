@@ -19,39 +19,153 @@ Welcome to the next generation of 3x-ui! This version brings significant improve
 
 ## Quick Start / Быстрый старт
 
+### 🚀 One-Line Install / Установка одной командой
+
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/konstpic/3x-ui-new/main/install.sh)
+```
+
+Or clone and run / Или клонируйте и запустите:
+
+```bash
+git clone https://github.com/konstpic/3x-ui-new.git
+cd 3x-ui-new
+sudo bash install.sh
+```
+
+---
+
+<details>
+<summary><b>📜 Script Installation (Recommended) / Установка через скрипт (Рекомендуется)</b></summary>
+
+### Automatic Installation / Автоматическая установка
+
+The install script supports multiple Linux distributions and automatically:
+- Installs Docker and Docker Compose
+- Configures network mode (host/bridge)
+- Sets up SSL certificates (Let's Encrypt for domain or IP)
+- Generates secure database password
+- Creates and starts all services
+
+Скрипт установки поддерживает множество дистрибутивов Linux и автоматически:
+- Устанавливает Docker и Docker Compose
+- Настраивает режим сети (host/bridge)
+- Настраивает SSL сертификаты (Let's Encrypt для домена или IP)
+- Генерирует безопасный пароль базы данных
+- Создаёт и запускает все сервисы
+
+#### Supported Systems / Поддерживаемые системы
+
+| Distribution | Package Manager |
+|--------------|-----------------|
+| Ubuntu/Debian | apt |
+| Fedora | dnf |
+| CentOS/RHEL | yum |
+| Arch Linux | pacman |
+| Alpine | apk |
+| openSUSE | zypper |
+
+#### Panel Installation / Установка панели
+
+```bash
+sudo bash install.sh
+# Select: 1) Install Panel
+```
+
+#### Node Installation / Установка узла
+
+```bash
+sudo bash install.sh
+# Select: 2) Install Node
+```
+
+#### Management Menu / Меню управления
+
+After installation, run the script again to access the management menu:
+
+После установки запустите скрипт снова для доступа к меню управления:
+
+```bash
+sudo bash install.sh
+```
+
+**Menu options / Опции меню:**
+- Update Panel/Node
+- Start/Stop/Restart services
+- Change ports
+- Renew SSL certificates
+- View logs and status
+
+</details>
+
+---
+
+<details>
+<summary><b>🔧 Manual Installation / Ручная установка</b></summary>
+
 ### Panel Installation / Установка панели
 
-1. Clone the repository:
+1. **Clone the repository / Клонируйте репозиторий:**
    ```bash
    git clone https://github.com/konstpic/3x-ui-new.git
    cd 3x-ui-new
    ```
 
-2. Configure `docker-compose.yml`:
-   - Change database passwords
-   - Adjust ports if needed
-   - Prepare SSL certificates in `cert/` directory
-
-3. Start services:
-   ```bash
-   docker-compose up -d
+2. **Configure `docker-compose.yml` / Настройте `docker-compose.yml`:**
+   - Change `change_this_password` to a secure password
+   - Измените `change_this_password` на надёжный пароль
+   ```yaml
+   XUI_DB_PASSWORD: your_secure_password
+   POSTGRES_PASSWORD: your_secure_password
    ```
 
-4. Access the panel at `http://your-server-ip:2053`
+3. **Prepare SSL certificates / Подготовьте SSL сертификаты:**
+   ```bash
+   mkdir -p cert
+   cp /path/to/fullchain.pem cert/fullchain.pem
+   cp /path/to/privkey.pem cert/privkey.pem
+   ```
+
+4. **Start services / Запустите сервисы:**
+   ```bash
+   docker compose up -d
+   ```
+
+5. **Access the panel / Откройте панель:**
+   ```
+   http://your-server-ip:2053
+   ```
+
+6. **Configure TLS in panel settings / Настройте TLS в панели:**
+   - Certificate: `/app/cert/fullchain.pem`
+   - Private Key: `/app/cert/privkey.pem`
 
 ### Node Installation / Установка узла
 
-1. Navigate to node directory:
+1. **Navigate to node directory / Перейдите в папку узла:**
    ```bash
    cd node
    ```
 
-2. Configure `docker-compose.yml` and prepare certificates
-
-3. Start the node:
+2. **Prepare certificates / Подготовьте сертификаты:**
    ```bash
-   docker-compose up -d
+   mkdir -p cert
+   cp /path/to/fullchain.pem cert/fullchain.pem
+   cp /path/to/privkey.pem cert/privkey.pem
    ```
+
+3. **Start the node / Запустите узел:**
+   ```bash
+   docker compose up -d
+   ```
+
+4. **Connect to panel / Подключите к панели:**
+   - Add new node in panel's Node Management
+   - Добавьте новый узел в управлении узлами панели
+
+</details>
+
+---
 
 ## Key Features / Основные возможности
 
@@ -61,6 +175,7 @@ Welcome to the next generation of 3x-ui! This version brings significant improve
 - **Modern UI**: Glass Morphism design
 - **Docker-Based**: Easy deployment with pre-built images
 - **HWID Protection**: Device identification (Beta, Happ & V2RayTun)
+- **Auto SSL**: Let's Encrypt certificates with auto-renewal
 
 - **Режим узлов**: Одна панель управляет несколькими узлами
 - **PostgreSQL**: Полная миграция с SQLite
@@ -68,6 +183,7 @@ Welcome to the next generation of 3x-ui! This version brings significant improve
 - **Современный интерфейс**: Дизайн Glass Morphism
 - **На основе Docker**: Легкое развертывание с предварительно собранными образами
 - **Защита HWID**: Идентификация устройств (Бета, Happ & V2RayTun)
+- **Авто SSL**: Let's Encrypt сертификаты с автопродлением
 
 ## Documentation / Документация
 
@@ -80,13 +196,15 @@ For detailed installation instructions, configuration, and migration guide, plea
 
 ## Requirements / Требования
 
-- Docker and Docker Compose
-- Domain name (for TLS)
-- SSL certificates (for HTTPS)
+- Linux server (Ubuntu, Debian, CentOS, Fedora, Arch, Alpine, openSUSE)
+- Root access
+- Domain name (optional, for TLS with domain)
+- Port 80 open (for SSL certificate issuance)
 
-- Docker и Docker Compose
-- Доменное имя (для TLS)
-- SSL-сертификаты (для HTTPS)
+- Linux сервер (Ubuntu, Debian, CentOS, Fedora, Arch, Alpine, openSUSE)
+- Root доступ
+- Доменное имя (опционально, для TLS с доменом)
+- Открытый порт 80 (для выпуска SSL сертификата)
 
 ## Support / Поддержка
 
@@ -102,11 +220,6 @@ For issues, questions, or contributions, please refer to the project repository.
 - @MHSanaei
 
 ## Donate / Донаты 💵
-
-**Donate Wallet / Кошелек для донатов:**
-- @konspic
-- @alireza0
-- @MHSanaei
 
 **Crypto / Криптовалюта:**
 - [Donate via NowPayments - MHSanaei](https://nowpayments.io/donation/hsanaei)
