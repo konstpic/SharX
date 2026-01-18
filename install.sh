@@ -765,11 +765,62 @@ prompt_and_setup_ssl() {
     esac
 }
 
+# Generate HTTPS environment variables if certificates exist
+generate_https_env() {
+    local panel_port="$1"
+    local cert_dir="$INSTALL_DIR/cert"
+    local https_env=""
+    
+    # Check if certificate files exist
+    if [[ -f "$cert_dir/fullchain.pem" && -f "$cert_dir/privkey.pem" ]]; then
+        https_env="      XUI_WEB_CERT_FILE: /app/cert/fullchain.pem\n      XUI_WEB_KEY_FILE: /app/cert/privkey.pem\n"
+        
+        # Add domain if available (from config or detect from certificate)
+        local domain=""
+        if load_config 2>/dev/null; then
+            if [[ "$CERT_TYPE" == "letsencrypt-domain" && -n "$DOMAIN_OR_IP" ]]; then
+                # Remove https://, http:// and port if present
+                domain="${DOMAIN_OR_IP}"
+                domain="${domain#https://}"
+                domain="${domain#http://}"
+                domain="${domain%%:*}"
+                # Check if it's a domain (not IP address)
+                if [[ -n "$domain" ]] && ! is_ipv4 "$domain" && ! is_ipv6 "$domain"; then
+                    https_env="${https_env}      XUI_WEB_DOMAIN: $domain\n"
+                fi
+            fi
+        else
+            # Try to extract domain from certificate if config not available
+            if command -v openssl &>/dev/null && [[ -f "$cert_dir/fullchain.pem" ]]; then
+                # Extract domain from certificate (more compatible approach)
+                local cert_domain=$(openssl x509 -in "$cert_dir/fullchain.pem" -noout -text 2>/dev/null | grep -A 1 "Subject Alternative Name" | grep "DNS:" | sed 's/.*DNS:\([^, ]*\).*/\1/' | head -n 1)
+                # If no SAN, try to get from Subject CN
+                if [[ -z "$cert_domain" ]]; then
+                    cert_domain=$(openssl x509 -in "$cert_dir/fullchain.pem" -noout -subject 2>/dev/null | sed -n 's/.*CN=\([^, ]*\).*/\1/p' | head -n 1)
+                fi
+                if [[ -n "$cert_domain" ]] && ! is_ipv4 "$cert_domain" && ! is_ipv6 "$cert_domain"; then
+                    https_env="${https_env}      XUI_WEB_DOMAIN: $cert_domain\n"
+                fi
+            fi
+        fi
+        
+        # Add port only if it differs from default (2053)
+        if [[ "$panel_port" != "2053" ]]; then
+            https_env="${https_env}      XUI_WEB_PORT: $panel_port\n"
+        fi
+    fi
+    
+    echo -e "$https_env"
+}
+
 # Create docker-compose.yml with host network
 create_compose_host() {
     local panel_port="$1"
     local sub_port="$2"
     local db_password="$3"
+    
+    # Generate HTTPS environment variables if certificates exist
+    local https_env=$(generate_https_env "$panel_port")
     
     cat > "$INSTALL_DIR/$COMPOSE_FILE" << EOF
 services:
@@ -783,7 +834,7 @@ services:
       # Xray settings
       XRAY_VMESS_AEAD_FORCED: "false"
       XUI_ENABLE_FAIL2BAN: "true"
-      
+$(echo -e "$https_env")
       # Panel ports (for host mode, change in panel settings)
       # Web UI: $panel_port
       # Subscriptions: $sub_port
@@ -843,6 +894,9 @@ create_compose_bridge() {
         fi
     done
     
+    # Generate HTTPS environment variables if certificates exist
+    local https_env=$(generate_https_env "$panel_port")
+    
     cat > "$INSTALL_DIR/$COMPOSE_FILE" << EOF
 services:
   3xui:
@@ -856,7 +910,7 @@ $(echo -e "$ports_section")
       # Xray settings
       XRAY_VMESS_AEAD_FORCED: "false"
       XUI_ENABLE_FAIL2BAN: "true"
-      
+$(echo -e "$https_env")
       # PostgreSQL settings
       XUI_DB_HOST: postgres
       XUI_DB_PORT: 5432
