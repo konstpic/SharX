@@ -1777,11 +1777,78 @@ update_services() {
     echo -e "${YELLOW}Note: Database was not restarted.${NC}"
 }
 
+# Get WebPath from database
+get_webpath_from_db() {
+    local db_host=""
+    local db_port="5432"
+    local db_user="xui_user"
+    local db_password=""
+    local db_name="xui_db"
+    local webpath=""
+    
+    # Try to get database credentials from container environment
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^3xui_app$"; then
+        local env_vars=$(docker inspect 3xui_app --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null)
+        if [[ -n "$env_vars" ]]; then
+            db_host=$(echo "$env_vars" | grep "^XUI_DB_HOST=" | cut -d'=' -f2 | tr -d '\r\n')
+            db_port=$(echo "$env_vars" | grep "^XUI_DB_PORT=" | cut -d'=' -f2 | tr -d '\r\n')
+            db_user=$(echo "$env_vars" | grep "^XUI_DB_USER=" | cut -d'=' -f2 | tr -d '\r\n')
+            db_password=$(echo "$env_vars" | grep "^XUI_DB_PASSWORD=" | cut -d'=' -f2 | tr -d '\r\n')
+            db_name=$(echo "$env_vars" | grep "^XUI_DB_NAME=" | cut -d'=' -f2 | tr -d '\r\n')
+        fi
+    fi
+    
+    # Fallback to config file
+    if [[ -z "$db_password" ]] && load_config 2>/dev/null; then
+        db_password="$DB_PASSWORD"
+        # Determine DB host based on network mode
+        if [[ "$NETWORK_MODE" == "host" ]]; then
+            db_host="127.0.0.1"
+        else
+            db_host="postgres"
+        fi
+    fi
+    
+    # If still no password, return empty
+    if [[ -z "$db_password" ]]; then
+        echo ""
+        return 1
+    fi
+    
+    # Set default values if not set
+    db_host="${db_host:-127.0.0.1}"
+    db_port="${db_port:-5432}"
+    db_user="${db_user:-xui_user}"
+    db_name="${db_name:-xui_db}"
+    
+    # Try to get WebPath from database
+    # First try via docker exec to postgres container
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^3xui_postgres$"; then
+        # Use docker exec to connect to postgres container
+        webpath=$(docker exec 3xui_postgres psql -h 127.0.0.1 -p 5432 -U "$db_user" -d "$db_name" -t -c "SELECT value FROM settings WHERE key = 'WebPath';" 2>/dev/null | tr -d ' \r\n')
+    elif command -v psql &>/dev/null && [[ "$db_host" == "127.0.0.1" ]] || [[ "$db_host" == "localhost" ]]; then
+        # Try direct psql connection (for host network mode)
+        export PGPASSWORD="$db_password"
+        webpath=$(psql -h "$db_host" -p "$db_port" -U "$db_user" -d "$db_name" -t -c "SELECT value FROM settings WHERE key = 'WebPath';" 2>/dev/null | tr -d ' \r\n')
+        unset PGPASSWORD
+    fi
+    
+    # Return WebPath or empty string
+    if [[ -n "$webpath" ]]; then
+        echo "$webpath"
+        return 0
+    else
+        echo ""
+        return 1
+    fi
+}
+
 # Get panel status for menu display
 get_panel_status() {
     local panel_status=""
     local panel_port=""
     local panel_address=""
+    local web_path=""
     local is_running=false
     
     # Check if container exists and is running
@@ -1812,6 +1879,9 @@ get_panel_status() {
         if [[ -n "$env_vars" ]] && echo "$env_vars" | grep -q "^XUI_WEB_CERT_FILE="; then
             has_cert=true
         fi
+        
+        # Get WebPath from database
+        web_path=$(get_webpath_from_db)
         
         # Get port from environment, config, or default
         if [[ -n "$env_port" ]]; then
@@ -1844,6 +1914,13 @@ get_panel_status() {
                 panel_address="${protocol}://${server_ip}:${panel_port}"
             fi
         fi
+        
+        # Append WebPath to address if available
+        if [[ -n "$web_path" ]] && [[ "$web_path" != "/" ]]; then
+            # Remove leading slash if present and add to address
+            local web_path_clean="${web_path#/}"
+            panel_address="${panel_address}/${web_path_clean}"
+        fi
     else
         panel_status="${RED}● Stopped${NC}"
         # Try to get port from config
@@ -1857,7 +1934,7 @@ get_panel_status() {
         fi
     fi
     
-    echo "$panel_status|$panel_port|$panel_address"
+    echo "$panel_status|$panel_port|$panel_address|$web_path"
 }
 
 # Show service status
@@ -2583,10 +2660,14 @@ main_menu() {
             local panel_status=$(echo "$status_info" | cut -d'|' -f1)
             local panel_port=$(echo "$status_info" | cut -d'|' -f2)
             local panel_address=$(echo "$status_info" | cut -d'|' -f3)
+            local web_path=$(echo "$status_info" | cut -d'|' -f4)
             
             echo -e "  ${WHITE}── Panel Status ──${NC}"
             echo -e "  Status:  $(echo -e "$panel_status")"
             echo -e "  Port:    ${CYAN}$panel_port${NC}"
+            if [[ -n "$web_path" ]] && [[ "$web_path" != "/" ]]; then
+                echo -e "  WebPath: ${CYAN}/$web_path${NC}"
+            fi
             echo -e "  Address: ${CYAN}$panel_address${NC}"
             echo ""
         fi
