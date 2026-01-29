@@ -1266,7 +1266,8 @@ create_compose_bridge() {
     local additional_ports=("$@")
     
     # Build ports section
-    local ports_section="      - \"$panel_port:2053\"   # Web UI\n      - \"$sub_port:2096\"     # Subscriptions"
+    # In bridge mode, we map external port to the same internal port (XUI_WEB_PORT/XUI_SUB_PORT)
+    local ports_section="      - \"$panel_port:$panel_port\"   # Web UI\n      - \"$sub_port:$sub_port\"     # Subscriptions"
     
     for port in "${additional_ports[@]}"; do
         if [[ -n "$port" ]]; then
