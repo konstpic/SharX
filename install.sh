@@ -598,7 +598,9 @@ get_server_ip() {
 # Get server IPv6
 get_server_ipv6() {
     local ip
-    ip=$(curl -6 -s ifconfig.me 2>/dev/null || curl -6 -s icanhazip.com 2>/dev/null || echo "")
+    ip=$(curl -6 -s --connect-timeout 3 -m 5 ifconfig.me 2>/dev/null || \
+         curl -6 -s --connect-timeout 3 -m 5 icanhazip.com 2>/dev/null || \
+         echo "")
     echo "$ip"
 }
 
