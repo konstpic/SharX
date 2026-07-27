@@ -1,11 +1,19 @@
 apiVersion: v2
 name: sharx
-description: SharX Xray panel with PostgreSQL
+description: SharX panel — umbrella chart (secret + uc)
 type: application
-version: 0.1.0
+version: 0.2.0
 appVersion: "latest"
 dependencies:
   - name: secret
     alias: secret
     version: 1.0.0
-    repository: file://../charts/secret
+    repository: oci://harbor.sharxconnect.app/library
+  - name: uc
+    alias: panel
+    version: 1.0.0
+    repository: oci://harbor.sharxconnect.app/library
+  - name: uc
+    alias: postgres
+    version: 1.0.0
+    repository: oci://harbor.sharxconnect.app/library

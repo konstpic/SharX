@@ -1,6 +1,12 @@
 dependencies:
 - name: secret
-  repository: file://../charts/secret
+  repository: oci://harbor.sharxconnect.app/library
   version: 1.0.0
-digest: sha256:53af0bda7749b57b5d32a42d23af0a1cb03c5169797436403dcc01063921083a
-generated: "2026-07-27T13:03:49.497982+03:00"
+- name: uc
+  repository: oci://harbor.sharxconnect.app/library
+  version: 1.0.0
+- name: uc
+  repository: oci://harbor.sharxconnect.app/library
+  version: 1.0.0
+digest: sha256:e733502b749263c14300c3f35905894a1ce8fd3936ee6a04d628ec5910e2b4ed
+generated: "2026-07-27T13:09:05.315084+03:00"

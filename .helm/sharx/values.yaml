@@ -1,21 +1,85 @@
 global:
+  env: sharxconnect
+  instance: main
   imageRegistry: registry.konstpic.ru/sharx
-  imagePullSecrets: []
+  vault_base_path: sharxconnect
 
 secret:
   vault:
     db:
-      path: '{{ .Values.global.vault_base_path | default "sharxconnect" }}/sharx/db'
-
-nameOverride: ""
-fullnameOverride: ""
+      path: '{{ .Values.global.vault_base_path }}/sharx/db'
 
 panel:
-  image:
-    repository: sharx
-    tag: ""
-    pullPolicy: IfNotPresent
+  nameOverride: panel
+  replicaType: Deployment
+  strategy: Recreate
   replicas: 1
+  image: '{{ .Values.global.imageRegistry }}/sharx:{{ .Values.global.appVersion | default "latest" }}'
+  imagePullPolicy: Always
+  serviceAccount:
+    create: true
+    name: sharx
+  containerSecurityContext:
+    capabilities:
+      add:
+        - NET_ADMIN
+  endpoints:
+    ClusterIP:
+      web:
+        port: 2053
+        containerPort: 2053
+      sub:
+        port: 2096
+        containerPort: 2096
+  envs:
+    XRAY_VMESS_AEAD_FORCED: "false"
+    XUI_ENABLE_FAIL2BAN: "true"
+    XUI_LOG_LEVEL: info
+    XUI_WEB_PORT: "2053"
+    XUI_WEB_LISTEN: "0.0.0.0"
+    XUI_WEB_DOMAIN: ""
+    XUI_WEB_BASE_PATH: /
+    XUI_SUB_PORT: "2096"
+    XUI_SUB_PATH: /sub/
+    XUI_SUB_DOMAIN: ""
+    XUI_DB_HOST: '{{ printf "%s-postgres" .Release.Name }}'
+    XUI_DB_PORT: "5432"
+    XUI_DB_USER: xui_user
+    XUI_DB_NAME: xui_db
+    XUI_DB_SSLMODE: disable
+  secrets:
+    db:
+      data:
+        XUI_DB_PASSWORD:
+          env: XUI_DB_PASSWORD
+  persistence:
+    createClaim: true
+    size: 5Gi
+    mountPath: /app/data
+  volumes:
+    - name: cert
+      emptyDir: {}
+    - name: dev-tun
+      hostPath:
+        path: /dev/net/tun
+        type: CharDevice
+  volumeMounts:
+    - name: cert
+      mountPath: /app/cert
+    - name: dev-tun
+      mountPath: /dev/net/tun
+  readinessProbe:
+    enabled: true
+    type: tcp
+    port: 2053
+    initDelay: 15
+    period: 10
+  livenessProbe:
+    enabled: true
+    type: tcp
+    port: 2053
+    initDelay: 60
+    period: 30
   resources:
     requests:
       cpu: 200m
@@ -23,33 +87,65 @@ panel:
     limits:
       cpu: "2"
       memory: 2Gi
-  persistence:
-    enabled: true
-    size: 5Gi
-    storageClass: ""
-  env:
-    xrayVmessAeadForced: "false"
-    enableFail2ban: "true"
-    logLevel: info
-    webPort: "2053"
-    webListen: "0.0.0.0"
-    webDomain: ""
-    webBasePath: /
-    subPort: "2096"
-    subPath: /sub/
-    subDomain: ""
-    dbHost: ""
-    dbPort: "5432"
-    dbUser: xui_user
-    dbName: xui_db
-    dbSslMode: disable
+  ingresses:
+    panel:
+      enabled: true
+      className: nginx
+      host: panel.example.com
+      path: /
+      servicePort: 2053
+      tls:
+        enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+    sub:
+      enabled: true
+      className: nginx
+      host: sub.example.com
+      path: /
+      servicePort: 2096
+      tls:
+        enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
 
 postgres:
-  enabled: true
-  image:
-    repository: postgres
-    tag: 16-alpine
-    pullPolicy: IfNotPresent
+  nameOverride: postgres
+  replicaType: StatefulSet
+  replicas: 1
+  image: '{{ .Values.global.imageRegistry }}/postgres:16-alpine'
+  imagePullPolicy: IfNotPresent
+  envs:
+    PGDATA: /var/lib/postgresql/data/pgdata
+    POSTGRES_USER: xui_user
+    POSTGRES_DB: xui_db
+  secrets:
+    db:
+      data:
+        POSTGRES_PASSWORD:
+          env: POSTGRES_PASSWORD
+  endpoints:
+    ClusterIP:
+      pg:
+        port: 5432
+        containerPort: 5432
+  persistence:
+    enabled: true
+    createClaim: true
+    size: 10Gi
+    mountPath: /var/lib/postgresql/data
+  readinessProbe:
+    enabled: true
+    type: exec
+    command: ["/bin/sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+    initDelay: 10
+    period: 10
+  livenessProbe:
+    enabled: true
+    type: exec
+    command: ["/bin/sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+    initDelay: 30
+    period: 20
   resources:
     requests:
       cpu: 100m
@@ -57,32 +153,3 @@ postgres:
     limits:
       cpu: 500m
       memory: 512Mi
-  persistence:
-    enabled: true
-    size: 10Gi
-    storageClass: ""
-
-auth:
-  createSecret: false
-  existingSecret: sharx-db
-  dbPassword: ""
-
-ingress:
-  panel:
-    enabled: true
-    className: nginx
-    host: panel.example.com
-    annotations: {}
-    tls:
-      enabled: true
-  sub:
-    enabled: true
-    className: nginx
-    host: sub.example.com
-    annotations: {}
-    tls:
-      enabled: true
-
-serviceAccount:
-  create: true
-  name: ""
