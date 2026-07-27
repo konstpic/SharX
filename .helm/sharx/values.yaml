@@ -1,0 +1,83 @@
+global:
+  imageRegistry: registry.konstpic.ru/sharx
+  imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+panel:
+  image:
+    repository: sharx
+    tag: ""
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+  env:
+    xrayVmessAeadForced: "false"
+    enableFail2ban: "true"
+    logLevel: info
+    webPort: "2053"
+    webListen: "0.0.0.0"
+    webDomain: ""
+    webBasePath: /
+    subPort: "2096"
+    subPath: /sub/
+    subDomain: ""
+    dbHost: ""
+    dbPort: "5432"
+    dbUser: xui_user
+    dbName: xui_db
+    dbSslMode: disable
+
+postgres:
+  enabled: true
+  image:
+    repository: postgres
+    tag: 16-alpine
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+
+auth:
+  createSecret: false
+  existingSecret: sharx-db
+  dbPassword: ""
+
+ingress:
+  panel:
+    enabled: true
+    className: nginx
+    host: panel.example.com
+    annotations: {}
+    tls:
+      enabled: true
+  sub:
+    enabled: true
+    className: nginx
+    host: sub.example.com
+    annotations: {}
+    tls:
+      enabled: true
+
+serviceAccount:
+  create: true
+  name: ""

@@ -1,0 +1,37 @@
+{{- if .Values.postgres.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "sharx.postgresFullname" . }}-data
+  labels:
+    {{- include "sharx.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- with .Values.postgres.persistence.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.postgres.persistence.size }}
+{{- end }}
+---
+{{- if .Values.panel.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "sharx.fullname" . }}-data
+  labels:
+    {{- include "sharx.labels" . | nindent 4 }}
+    app.kubernetes.io/component: panel
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- with .Values.panel.persistence.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.panel.persistence.size }}
+{{- end }}
