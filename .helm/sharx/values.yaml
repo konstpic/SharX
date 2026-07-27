@@ -2,6 +2,11 @@ global:
   imageRegistry: registry.konstpic.ru/sharx
   imagePullSecrets: []
 
+secret:
+  vault:
+    db:
+      path: '{{ .Values.global.vault_base_path | default "sharxconnect" }}/sharx/db'
+
 nameOverride: ""
 fullnameOverride: ""
 

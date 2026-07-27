@@ -1,0 +1,6 @@
+dependencies:
+- name: secret
+  repository: file://../charts/secret
+  version: 1.0.0
+digest: sha256:53af0bda7749b57b5d32a42d23af0a1cb03c5169797436403dcc01063921083a
+generated: "2026-07-27T13:03:49.497982+03:00"

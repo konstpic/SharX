@@ -4,3 +4,8 @@ description: SharX Xray panel with PostgreSQL
 type: application
 version: 0.1.0
 appVersion: "latest"
+dependencies:
+  - name: secret
+    alias: secret
+    version: 1.0.0
+    repository: file://../charts/secret
