@@ -120,9 +120,9 @@ sudo ./install.sh
    ```yaml
    services:
      sharx:
-       image: registry.konstpic.ru/sharx/sharx:latest  # Specify version here / Укажите версию здесь
+       image: harbor.sharxconnect.app/sharx/sharx:latest  # Specify version here / Укажите версию здесь
      postgres:
-       image: registry.konstpic.ru/sharx/postgres:16-alpine
+       image: harbor.sharxconnect.app/sharx/postgres:16-alpine
    ```yaml
    XUI_DB_PASSWORD: your_secure_password
    POSTGRES_PASSWORD: your_secure_password

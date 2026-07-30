@@ -4,7 +4,7 @@
 # Image: beatkind/watchtower — see https://github.com/beatkind/watchtower
 services:
   sharx:
-    image: registry.konstpic.ru/sharx/sharx:latest
+    image: harbor.sharxconnect.app/sharx/sharx:latest
     container_name: sharx_app
     labels:
       com.centurylinklabs.watchtower.enable: "true"
@@ -78,7 +78,7 @@ services:
       - sharx_network
 
   postgres:
-    image: registry.konstpic.ru/sharx/postgres:16-alpine
+    image: harbor.sharxconnect.app/sharx/postgres:16-alpine
     container_name: sharx_postgres
     ports:
       - "5432:5432"

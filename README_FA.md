@@ -150,7 +150,7 @@ sudo bash install.sh
 
 **Watchtower** (`sharx_watchtower`) در همان `docker compose` اجرا می‌شود. پنل با `XUI_DOCKER_UPDATER_URL` و `XUI_DOCKER_UPDATER_TOKEN` به HTTP API آن وصل می‌شود (پورت publish نشده) و ایمیج جدید `sharx` را با برچسب `com.centurylinklabs.watchtower.enable: "true"` می‌کشد. **دکمه به‌روز در UI** معمولاً همین مسیر است. در production مقدار `WATCHTOWER_HTTP_API_TOKEN` را در `.env` بگذارید (مثلاً `openssl rand -hex 24`).
 
-**نکته:** اگر پنل با `build:` در compose ساخته شود، نام ایمیج مثل `sharx-code-sharx` است — مسیر رجیستری نیست. Watchtower نمی‌تواند آن را `pull` کند (خطای 401 / repository not found). در production مقدار `image:` از Harbor (مثلاً `registry.konstpic.ru/sharx/sharx:1.1.2`) بگذارید، `build` را بردارید، `docker login registry.konstpic.ru` و کانتینر را دوباره بسازید. / **Note (EN):** see README_EN “Update Panel” for the same Watchtower + `build:` caveat.
+**نکته:** اگر پنل با `build:` در compose ساخته شود، نام ایمیج مثل `sharx-code-sharx` است — مسیر رجیستری نیست. Watchtower نمی‌تواند آن را `pull` کند (خطای 401 / repository not found). در production مقدار `image:` از Harbor (مثلاً `harbor.sharxconnect.app/sharx/sharx:1.1.2`) بگذارید، `build` را بردارید، `docker login harbor.sharxconnect.app` و کانتینر را دوباره بسازید. / **Note (EN):** see README_EN “Update Panel” for the same Watchtower + `build:` caveat.
 
 * **با Docker Compose**:
 ```bash

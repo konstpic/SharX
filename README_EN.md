@@ -135,7 +135,7 @@ sudo bash install.sh
 
 **Watchtower** (`sharx_watchtower`) runs in the same `docker compose` stack. The panel uses `XUI_DOCKER_UPDATER_URL` and `XUI_DOCKER_UPDATER_TOKEN` to call its HTTP API (no public port) and pull a new `sharx` image with `com.centurylinklabs.watchtower.enable: "true"`. The **in-panel update button** usually goes through this path. For production, set `WATCHTOWER_HTTP_API_TOKEN` in `.env` (e.g. `openssl rand -hex 24`).
 
-**Note:** if the panel image was built with `build:` in compose, the image name looks like `sharx-code-sharx` — that is **not** a registry path. Watchtower will `docker pull` that name, Docker Hub will be queried (`library/...`) and the pull fails with 401 or “does not exist”. For production, set a **published image** in `docker-compose.yml`, e.g. `image: registry.konstpic.ru/sharx/sharx:1.1.2` (and remove/comment the `build` for the panel), run `docker login registry.konstpic.ru`, and recreate the container. Then the UI update path and Watchtower can pull new builds.
+**Note:** if the panel image was built with `build:` in compose, the image name looks like `sharx-code-sharx` — that is **not** a registry path. Watchtower will `docker pull` that name, Docker Hub will be queried (`library/...`) and the pull fails with 401 or “does not exist”. For production, set a **published image** in `docker-compose.yml`, e.g. `image: harbor.sharxconnect.app/sharx/sharx:1.1.2` (and remove/comment the `build` for the panel), run `docker login harbor.sharxconnect.app`, and recreate the container. Then the UI update path and Watchtower can pull new builds.
 
 You can also:
 

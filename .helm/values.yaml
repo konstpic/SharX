@@ -1,20 +1,32 @@
 global:
-  env: sharxconnect
-  instance: main
-  imageRegistry: registry.konstpic.ru/sharx
-  vault_base_path: sharxconnect
+  env: ENV-STUB
+  instance: INSTANCE-STUB
+  vault_base_path: '{{ .Values.global.env }}'
+  registry_url: REGISTRY-URL-STUB
+  domain: DOMAIN-STUB
+  public_domain: PUBLIC-DOMAIN-STUB
+  appVersion: latest
+  db_secret_name: sharx/db
+  db_secret_path: '{{ tpl $.Values.global.vault_base_path $ }}/{{ $.Values.global.db_secret_name }}'
+  settings:
+    panel_host: panel.example.com
+    sub_host: sub.example.com
 
 secret:
   vault:
-    db:
-      path: '{{ .Values.global.vault_base_path }}/sharx/db'
+    - name: db
+      path: '{{ tpl $.Values.global.db_secret_path $ }}'
+      keys:
+        - XUI_DB_PASSWORD
+        - POSTGRES_PASSWORD
+        - POSTGRES_USER
+        - POSTGRES_DB
 
 panel:
-  nameOverride: panel
   replicaType: Deployment
   strategy: Recreate
   replicas: 1
-  image: '{{ .Values.global.imageRegistry }}/sharx:{{ .Values.global.appVersion | default "latest" }}'
+  image: '{{ tpl $.Values.global.registry_url $ }}/sharx:{{ .Values.global.appVersion | default "latest" }}'
   imagePullPolicy: Always
   serviceAccount:
     create: true
@@ -26,9 +38,11 @@ panel:
   endpoints:
     ClusterIP:
       web:
+        protocol: TCP
         port: 2053
         containerPort: 2053
       sub:
+        protocol: TCP
         port: 2096
         containerPort: 2096
   envs:
@@ -37,11 +51,11 @@ panel:
     XUI_LOG_LEVEL: info
     XUI_WEB_PORT: "2053"
     XUI_WEB_LISTEN: "0.0.0.0"
-    XUI_WEB_DOMAIN: ""
+    XUI_WEB_DOMAIN: '{{ tpl $.Values.global.settings.panel_host $ }}'
     XUI_WEB_BASE_PATH: /
     XUI_SUB_PORT: "2096"
     XUI_SUB_PATH: /sub/
-    XUI_SUB_DOMAIN: ""
+    XUI_SUB_DOMAIN: '{{ tpl $.Values.global.settings.sub_host $ }}'
     XUI_DB_HOST: '{{ printf "%s-postgres" .Release.Name }}'
     XUI_DB_PORT: "5432"
     XUI_DB_USER: xui_user
@@ -91,7 +105,7 @@ panel:
     panel:
       enabled: true
       className: nginx
-      host: panel.example.com
+      host: '{{ tpl $.Values.global.settings.panel_host $ }}'
       path: /
       servicePort: 2053
       tls:
@@ -101,7 +115,7 @@ panel:
     sub:
       enabled: true
       className: nginx
-      host: sub.example.com
+      host: '{{ tpl $.Values.global.settings.sub_host $ }}'
       path: /
       servicePort: 2096
       tls:
@@ -110,10 +124,9 @@ panel:
         cert-manager.io/cluster-issuer: letsencrypt-prod
 
 postgres:
-  nameOverride: postgres
   replicaType: StatefulSet
   replicas: 1
-  image: '{{ .Values.global.imageRegistry }}/postgres:16-alpine'
+  image: '{{ tpl $.Values.global.registry_url $ }}/postgres:16-alpine'
   imagePullPolicy: IfNotPresent
   envs:
     PGDATA: /var/lib/postgresql/data/pgdata
@@ -127,6 +140,7 @@ postgres:
   endpoints:
     ClusterIP:
       pg:
+        protocol: TCP
         port: 5432
         containerPort: 5432
   persistence:

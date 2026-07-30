@@ -1464,7 +1464,7 @@ create_compose_host() {
     cat > "$INSTALL_DIR/$COMPOSE_FILE" << EOF
 services:
   sharx:
-    image: registry.konstpic.ru/sharx/sharx:latest
+    image: harbor.sharxconnect.app/sharx/sharx:latest
     container_name: sharx_app
     network_mode: host
     labels:
@@ -1521,7 +1521,7 @@ $(echo -e "$env_vars")
       - xui_network
 
   postgres:
-    image: registry.konstpic.ru/sharx/postgres:16-alpine
+    image: harbor.sharxconnect.app/sharx/postgres:16-alpine
     container_name: sharx_postgres
     network_mode: host
     environment:
@@ -1570,7 +1570,7 @@ create_compose_bridge() {
     cat > "$INSTALL_DIR/$COMPOSE_FILE" << EOF
 services:
   sharx:
-    image: registry.konstpic.ru/sharx/sharx:latest
+    image: harbor.sharxconnect.app/sharx/sharx:latest
     container_name: sharx_app
     labels:
       com.centurylinklabs.watchtower.enable: "true"
@@ -1641,7 +1641,7 @@ $(echo -e "$env_vars")
       - xui_network
 
   postgres:
-    image: registry.konstpic.ru/sharx/postgres:16-alpine
+    image: harbor.sharxconnect.app/sharx/postgres:16-alpine
     container_name: sharx_postgres
     ports:
       - "5432:5432"

@@ -131,7 +131,7 @@ sudo ./install_ru.sh
 
 В `docker compose` с панелью идёт **Watchtower** (`sharx_watchtower`): панель по `XUI_DOCKER_UPDATER_URL` / `XUI_DOCKER_UPDATER_TOKEN` вызывает его HTTP API (порт наружу не открыт) и тянет новый образ `sharx` с меткой `com.centurylinklabs.watchtower.enable: "true"`. Обычно так работает **обновление из веб-интерфейса**. Для production задайте `WATCHTOWER_HTTP_API_TOKEN` в `.env` (например: `openssl rand -hex 24`).
 
-**Важно:** если панель собрана через `build:` в compose, у контейнера имя образа вроде `sharx-code-sharx` — это **не** путь в Harbor. Watchtower пытается сделать `docker pull` этого имени, запрос уходит на Docker Hub и падает с 401 / «repository does not exist». В production в `docker-compose.yml` укажите **готовый образ** из реестра, например `image: registry.konstpic.ru/sharx/sharx:1.1.2` (и уберите/закомментируйте `build` для панели), выполните `docker login registry.konstpic.ru` и пересоздайте контейнер. После этого и кнопка в UI, и Watchtower смогут подтягивать обновления.
+**Важно:** если панель собрана через `build:` в compose, у контейнера имя образа вроде `sharx-code-sharx` — это **не** путь в Harbor. Watchtower пытается сделать `docker pull` этого имени, запрос уходит на Docker Hub и падает с 401 / «repository does not exist». В production в `docker-compose.yml` укажите **готовый образ** из реестра, например `image: harbor.sharxconnect.app/sharx/sharx:1.1.2` (и уберите/закомментируйте `build` для панели), выполните `docker login harbor.sharxconnect.app` и пересоздайте контейнер. После этого и кнопка в UI, и Watchtower смогут подтягивать обновления.
 
 Альтернативы:
 

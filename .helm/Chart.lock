@@ -1,0 +1,12 @@
+dependencies:
+- name: secret
+  repository: file://../../../../lib/secret
+  version: 1.1.0
+- name: uc
+  repository: file://../../../../lib/uc
+  version: 1.0.0
+- name: uc
+  repository: file://../../../../lib/uc
+  version: 1.0.0
+digest: sha256:d25fe95560d36f196288e55805082f1d78242784458460ae653e02e85e657ac7
+generated: "2026-07-27T13:36:05.820338+03:00"
