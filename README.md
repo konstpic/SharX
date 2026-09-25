@@ -1,7 +1,7 @@
 <div align="center">
 
 <!-- SharX Hero Section -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=0,2,3,5,30&height=300&section=header&text=SharX&fontSize=70&fontAlignY=40&animation=fadeIn&fontColor=gradient&desc=Multi-Node%20%7C%20Subscription%20Builder%20%7C%20Observability&descSize=25&descAlignY=60" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=0,2,3,5,30&height=300&section=header&text=SharX&fontSize=70&fontAlignY=40&animation=fadeIn&fontColor=gradient&desc=Proxy%20Infrastructure%20%7C%20Multi-Node%20%7C%20Multi-Core&descSize=25&descAlignY=60" width="100%"/>
 
 </div>
 
@@ -13,9 +13,9 @@
 
 ## Welcome to SharX / Добро пожаловать в SharX
 
-**SharX** is a modern multi-node Xray management platform with Docker-first deployment, observability hooks, and a visual subscription page builder.
+**SharX** is an independent, multi-node proxy infrastructure management platform. It brings centralized control of servers, clients, inbounds, subscriptions and multiple proxy cores into one system, with Docker-first deployment, a visual subscription page builder and optional observability.
 
-**SharX** — современная multi-node платформа управления Xray с Docker-сборкой, наблюдаемостью и визуальным конструктором страницы подписки.
+**SharX** — самостоятельная мультинодная платформа управления прокси-инфраструктурой. Она объединяет управление серверами, клиентами, входящими подключениями, подписками и несколькими прокси-ядрами с развёртыванием через Docker, визуальным конструктором страниц подписки и наблюдаемостью.
 
 This version brings a modern, Docker-first architecture, **multi-node** workers, a **visual subscription page builder**, **encrypted cookie-based web sessions**, and **optional observability** hooks (Prometheus text metrics, optional Loki / VictoriaMetrics in settings, Grafana dashboard JSON export).
 

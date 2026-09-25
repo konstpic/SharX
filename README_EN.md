@@ -4,7 +4,7 @@
 
 ## Welcome to SharX
 
-**SharX** is a modern multi-node Xray management platform with Docker-first deployment, observability hooks, and a visual subscription page builder.
+**SharX** is an independent, multi-node proxy infrastructure management platform—not just an Xray panel. It brings centralized control of servers, clients, inbounds, subscriptions and multiple proxy cores into one system, with Docker-first deployment, a visual subscription page builder and optional observability.
 
 This version brings a modern, Docker-first architecture, **multi-node** workers, a **visual subscription page builder**, **encrypted cookie web sessions** (`web/web.go`), and **optional observability**: Prometheus text metrics at `{basePath}panel/metrics`, optional Loki / VictoriaMetrics endpoints in panel settings, and a downloadable Grafana dashboard JSON for your own stack.
 
