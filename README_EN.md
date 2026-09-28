@@ -8,6 +8,132 @@
 
 This version brings a modern, Docker-first architecture, **multi-node** workers, a **visual subscription page builder**, **encrypted cookie web sessions** (`web/web.go`), and **optional observability**: Prometheus text metrics at `{basePath}panel/metrics`, optional Loki / VictoriaMetrics endpoints in panel settings, and a downloadable Grafana dashboard JSON for your own stack.
 
+## Demo
+
+![Panel demo](./assets/panel-demo.gif)
+
+[Watch the full video](https://github.com/konstpic/sharx-code/blob/main/assets/panel-demo.mp4)
+
+<sub>Music: "Inspired" by Kevin MacLeod (incompetech.com), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).</sub>
+
+## How it works
+
+SharX separates **infrastructure** (servers), **delivery** (what a client is shown) and **access** (what a client may use). Everything below is how those pieces connect.
+
+### 1. Big picture
+
+The panel keeps all data in PostgreSQL, pushes configuration to your **nodes** and serves **subscriptions**. Nodes run Xray and optional sidecars (Telemt MTProto, AmneziaWG, WireGuard). Client apps fetch a subscription from the panel, then connect straight to a node (or to a balancer).
+
+```mermaid
+flowchart TB
+    Admin([Administrator]) --> UI
+    subgraph Panel["SharX Panel"]
+        direction LR
+        UI["Web UI"] --> API["API and services"]
+        API <--> DB[("PostgreSQL")]
+        DB --> Sub["Subscription service<br/>port 2096"]
+    end
+    App([Client app]) -->|"1. GET subscription"| Sub
+    API <-->|"config push, status, traffic<br/>mTLS + JWT"| NA["Node A<br/>Xray + sidecars"]
+    API <--> NB["Node B<br/>Xray + sidecars"]
+    App ==>|"2. VPN traffic"| NB
+```
+
+### 2. From inbound to client: placements, hosts, bundles
+
+Three ideas keep the model simple:
+
+- **Placement** – an *inbound* running on a node (or in a balancer pool). This is infrastructure.
+- **Host** – one entry a client is shown: an address and port bound to exactly one inbound (a node, a balancer, or your own domain/CDN), with optional link overrides such as SNI, path, name suffix.
+- **Bundle** – an ordered set of hosts. A client belongs to bundles; the client's access is the union of the inbounds behind the bundle hosts, and the subscription lists those hosts in order.
+
+Hosts for nodes and balancer pools are created and kept in sync automatically. Add an inbound to a new node and every bundle that already covers that inbound gets the new entry.
+
+```mermaid
+flowchart LR
+    subgraph Infra["Infrastructure"]
+        IB["Inbound<br/>VLESS / Reality / Hysteria2 ..."]
+        IB --> PA["Placement on Node A"]
+        IB --> PB["Placement on Node B"]
+        IB --> PP["Balancer pool"]
+        IB --> AD["Custom address<br/>domain or CDN"]
+    end
+    subgraph Delivery["Delivery"]
+        PA --> HA["Host: Node A"]
+        PB --> HB["Host: Node B"]
+        PP --> HL["Host: Balancer"]
+        AD --> HD["Host: my.domain"]
+    end
+    subgraph Access["Access"]
+        HA --> BU["Bundle<br/>ordered hosts"]
+        HB --> BU
+        HL --> BU
+        HD --> BU
+        BU --> CL(["Client"])
+    end
+    CL --> SUBS["Subscription<br/>links in bundle order"]
+```
+
+### 3. Balancers
+
+A **balancer** is a separate server in front of several nodes. It runs HAProxy or nginx `stream` and relays raw TCP/UDP, so Reality, VLESS, Trojan, Shadowsocks, Hysteria2 and WireGuard keep working unchanged. Clients see one stable address, a dead node is skipped automatically, and node IPs stay hidden.
+
+A **pool** is one inbound behind one balancer. Members default to every node that serves the inbound, with weights, backup flags and an algorithm (round robin, least connections, source-IP hash). For each pool you choose what the client sees:
+
+| Pool mode | Client subscription |
+|---|---|
+| `replace` | only the balancer entry, node IPs hidden |
+| `prepend` | balancer first, direct nodes as fallback |
+| `append` | direct nodes first, balancer last |
+
+```mermaid
+flowchart LR
+    C(["Client app"]) ==>|"one address"| LB["Balancer<br/>HAProxy or nginx stream"]
+    LB ==>|"weight 3"| N1["Node A"]
+    LB ==>|"weight 1"| N2["Node B"]
+    LB -.->|"backup"| N3["Node C"]
+    LB -. "health checks" .-> N1
+    LB -. "health checks" .-> N2
+    P["Panel"] -->|"apply spec<br/>mTLS + JWT"| AG["Balancer agent"]
+    AG -->|"validate, swap atomically,<br/>graceful reload"| LB
+```
+
+### 4. What happens when a client opens a subscription
+
+The subscription service resolves the client by its `subId`, walks the client's enabled bundles and hosts, skips disabled or unsupported entries, and builds links in the format the app understands (Happ, v2rayNG, Clash, sing-box and others, chosen by User-Agent). A browser gets the public subscription page instead, rendered from the layout you built in the visual designer.
+
+```mermaid
+sequenceDiagram
+    participant App as Client app or browser
+    participant Sub as Subscription service
+    participant DB as PostgreSQL
+    App->>Sub: GET /sub/{subId}
+    Sub->>DB: client, bundles, hosts, inbounds
+    DB-->>Sub: enabled entries in bundle order
+    alt VPN app
+        Sub-->>App: links in the app's format (by User-Agent)
+    else Browser
+        Sub-->>App: public page from the designer layout
+    end
+    App->>App: connect to a node or a balancer
+```
+
+### 5. Adding a client to a bundle
+
+Assign a client to a bundle and the panel derives the access, provisions the client on every node of the affected inbounds and updates the subscription. Nothing is deleted and re-created, so existing keys and links keep working.
+
+```mermaid
+flowchart TD
+    A["Add client to a bundle"] --> B["Collect inbounds behind the bundle hosts"]
+    B --> C["Diff against the client's current access<br/>add missing, remove uncovered"]
+    C --> D["Push updated Xray / sidecar config to nodes"]
+    C --> E["Subscription now lists the bundle hosts"]
+    D --> F(["Client connects"])
+    E --> F
+```
+
+More detail: [bundles](https://github.com/konstpic/sharx-code/blob/main/docs/architecture/bundles.md), [balancer](https://github.com/konstpic/sharx-code/blob/main/docs/architecture/balancer.md), [wiki](https://github.com/konstpic/sharx-code/blob/main/docs/wiki/en/README.md).
+
 ## What's New
 
 ### Node Mode (1 panel – multiple nodes)
